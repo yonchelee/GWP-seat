@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.26 GWP 연화담 자리배치도</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1210;
+  --surface: #181d1a;
+  --border: #2a332e;
+  --green: #4a7c68;
+  --green-light: #c8ddd7;
+  --green-dim: #2c4a3e;
+  --amber: #c4874a;
+  --text: #d8d4cc;
+  --text-dim: #6a7870;
+  --chair: #3a5c4e;
+  --chair-named: #5a9e80;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  padding: 24px 16px 60px;
+}
+
+/* ─ 헤더 ─ */
+header { text-align:center; margin-bottom:20px; }
+header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; color: #fff; margin-bottom: 4px;
+  word-break: keep-all;
+}
+header p { font-size: 10px; color: var(--text-dim); letter-spacing: 2px; }
+
+/* ─ 스탯바 ─ */
+.stats-bar {
+  display: flex; max-width: 680px;
+  margin: 0 auto 20px;
+  border: 1px solid var(--border);
+}
+.stat-item {
+  flex: 1; padding: 10px 8px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.stat-item:last-child { border-right: none; background: var(--green-dim); }
+.stat-num { font-size: 18px; font-weight: 700; color: var(--green-light); line-height: 1; margin-bottom: 2px; }
+.stat-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+
+/* ─ 메인 레이아웃 ─
+   룸A | 가벽 | 룸B | 가벽 | 홀
+   모두 같은 height: SVG height 고정
+*/
+.layout-row {
+  display: flex;
+  align-items: flex-start;   /* 상단 정렬 */
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+/* 각 존 */
+.zone {
+  background: var(--surface);
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 8px 24px;
+}
+.zone.hall { flex: 1.88; }
+
+.zone-label {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  background: var(--green-dim); color: var(--green-light);
+  font-size: 9px; font-weight: 600; letter-spacing: 2px;
+  padding: 2px 12px; white-space: nowrap;
+}
+.zone-count {
+  position: absolute;
+  bottom: 5px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: var(--text-dim); white-space: nowrap;
+}
+.zone-count span { color: var(--green-light); font-weight: 600; }
+
+/* SVG: 가로 100%, 높이는 viewBox 비율로 자동 */
+.room-svg { width: 100%; display: block; }
+
+/* 가벽 */
+.wall {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  width: 28px; flex-shrink: 0;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  align-self: stretch;
+}
+.wall-line { flex: 1; border-left: 2px dashed var(--amber); opacity: 0.4; }
+.wall-tag {
+  font-size: 7px; color: var(--amber);
+  border: 1px dashed var(--amber);
+  padding: 4px 3px;
+  writing-mode: vertical-rl;
+  opacity: 0.8; white-space: nowrap;
+  margin: 6px 0;
+}
+
+/* 의자 */
+.chair-rect { cursor: pointer; transition: fill 0.12s; }
+.chair-rect:hover { fill: #5a8c7a !important; }
+.chair-rect.named { fill: var(--chair-named) !important; }
+
+/* ─ 모달 ─ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #1e2a24; border: 1px solid var(--green);
+  padding: 26px 30px; min-width: 290px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.modal h3 { font-size: 13px; color: var(--green-light); margin-bottom: 4px; font-weight: 600; }
+.modal p  { font-size: 10px; color: var(--text-dim); margin-bottom: 16px; }
+.modal input {
+  width: 100%; background: #0f1210; border: 1px solid var(--green);
+  color: var(--text); font-size: 15px;
+  font-family: 'Noto Sans KR', sans-serif;
+  padding: 9px 12px; outline: none; margin-bottom: 14px;
+}
+.modal input:focus { border-color: var(--green-light); }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btns button {
+  background: none; border: 1px solid var(--green-light);
+  color: var(--green-light); font-size: 10px;
+  padding: 5px 14px; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.modal-btns button.primary { background: var(--green-dim); }
+.modal-btns button:hover   { background: var(--green); }
+.modal-btns button.del     { border-color: #c06030; color: #c06030; }
+.modal-btns button.del:hover { background: #c06030; color: #fff; }
+
+/* ─ 하단 ─ */
+.info-panel {
+  max-width: 1500px; margin: 12px auto 0;
+  padding: 10px 20px; background: var(--green-dim);
+  border: 1px solid var(--green);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px;
+}
+.info-text { color: var(--green-light); }
+.info-reset {
+  background: none; border: 1px solid var(--green-light);
+  color: var(--green-light); font-size: 10px;
+  padding: 4px 12px; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.info-reset:hover { background: var(--green); }
+
+.legend {
+  max-width: 1500px; margin: 14px auto 0;
+  display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+}
+.leg { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-dim); }
+.leg-box { width: 12px; height: 12px; border-radius: 2px; }
+
+#tooltip {
+  position: fixed; background: #1e2622;
+  border: 1px solid var(--green); color: var(--green-light);
+  font-size: 10px; padding: 5px 10px;
+  pointer-events: none; display: none; z-index: 100;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>3.26(목) 선행기구개발그룹 1분기 GWP  연화담</h1>
+  <p>룸 A · 룸 B · 메인 홀 — 가벽 오픈 통합</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num">32</div><div class="stat-label">룸 A</div></div>
+  <div class="stat-item"><div class="stat-num">32</div><div class="stat-label">룸 B</div></div>
+  <div class="stat-item"><div class="stat-num">76</div><div class="stat-label">홀</div></div>
+  <div class="stat-item"><div class="stat-num">140</div><div class="stat-label">총 의자</div></div>
+  <div class="stat-item"><div class="stat-num" id="s-named">0</div><div class="stat-label">기입 완료</div></div>
+</div>
+
+<div class="layout-row">
+
+<!--
+  ══════════════════════════════════════════
+  룸 A — viewBox: 0 0 200 520
+  창가 = 왼쪽 (x=0 방향)
+  테이블 2열 × 2행, 상단 정렬
+  테이블: w=52, h=220
+  의자: w=14, h=46, 4개, 균등간격 = 220/4 = 55
+  열1 x=28, 열2 x=118
+  행1 y=12, 행2 y=12+220+8=240
+  의자 좌x=12, 우x=82 (열1) / 좌x=102, 우x=172 (열2)
+  ══════════════════════════════════════════
+-->
+<div class="zone">
+  <div class="zone-label">룸 A</div>
+  <div class="zone-count">4테이블 · <span>32석</span></div>
+  <svg class="room-svg" viewBox="0 0 200 490" id="svg-A">
+    <!-- 창가 바 -->
+    <rect x="1" y="10" width="7" height="468" fill="#4a7c68" opacity="0.22" rx="1"/>
+    <text x="6" y="248" fill="#4a7c68" font-size="6.5" text-anchor="middle" opacity="0.6" transform="rotate(-90,6,248)">창가</text>
+
+    <!-- ── 열1: A-1(위), A-3(아래) ── -->
+    <!-- A-1 테이블 y=12, h=220 -->
+    <rect x="28" y="12" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="54" y="125" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,54,125)">A-1</text>
+    <!-- A-1 좌의자 (창가) x=12, 우의자 x=82, 간격55: y=12,67,122,177 -->
+    <rect data-zone="A" data-table="A-1" data-seat="1" class="chair-rect" x="12" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="2" class="chair-rect" x="12" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="3" class="chair-rect" x="12" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="4" class="chair-rect" x="12" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="5" class="chair-rect" x="82" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="6" class="chair-rect" x="82" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="7" class="chair-rect" x="82" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-1" data-seat="8" class="chair-rect" x="82" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+
+    <!-- A-3 테이블 y=240, h=220 -->
+    <rect x="28" y="240" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="54" y="353" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,54,353)">A-3</text>
+    <rect data-zone="A" data-table="A-3" data-seat="1" class="chair-rect" x="12" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="2" class="chair-rect" x="12" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="3" class="chair-rect" x="12" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="4" class="chair-rect" x="12" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="5" class="chair-rect" x="82" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="6" class="chair-rect" x="82" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="7" class="chair-rect" x="82" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-3" data-seat="8" class="chair-rect" x="82" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+
+    <!-- ── 열2: A-2(위), A-4(아래) ── -->
+    <!-- A-2 테이블 y=12 -->
+    <rect x="118" y="12" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="144" y="125" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,144,125)">A-2</text>
+    <rect data-zone="A" data-table="A-2" data-seat="1" class="chair-rect" x="102" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="2" class="chair-rect" x="102" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="3" class="chair-rect" x="102" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="4" class="chair-rect" x="102" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="5" class="chair-rect" x="172" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="6" class="chair-rect" x="172" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="7" class="chair-rect" x="172" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-2" data-seat="8" class="chair-rect" x="172" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+
+    <!-- A-4 테이블 y=240 -->
+    <rect x="118" y="240" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="144" y="353" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,144,353)">A-4</text>
+    <rect data-zone="A" data-table="A-4" data-seat="1" class="chair-rect" x="102" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="2" class="chair-rect" x="102" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="3" class="chair-rect" x="102" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="4" class="chair-rect" x="102" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="5" class="chair-rect" x="172" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="6" class="chair-rect" x="172" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="7" class="chair-rect" x="172" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="A" data-table="A-4" data-seat="8" class="chair-rect" x="172" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+  </svg>
+</div>
+
+<div class="wall"><div class="wall-line"></div><div class="wall-tag">가벽 오픈</div><div class="wall-line"></div></div>
+
+<!-- ══ 룸 B (룸 A와 동일 구조) ══ -->
+<div class="zone">
+  <div class="zone-label">룸 B</div>
+  <div class="zone-count">4테이블 · <span>32석</span></div>
+  <svg class="room-svg" viewBox="0 0 200 490" id="svg-B">
+    <rect x="1" y="10" width="7" height="468" fill="#4a7c68" opacity="0.22" rx="1"/>
+    <text x="6" y="248" fill="#4a7c68" font-size="6.5" text-anchor="middle" opacity="0.6" transform="rotate(-90,6,248)">창가</text>
+
+    <rect x="28" y="12" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="54" y="125" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,54,125)">B-1</text>
+    <rect data-zone="B" data-table="B-1" data-seat="1" class="chair-rect" x="12" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="2" class="chair-rect" x="12" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="3" class="chair-rect" x="12" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="4" class="chair-rect" x="12" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="5" class="chair-rect" x="82" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="6" class="chair-rect" x="82" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="7" class="chair-rect" x="82" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-1" data-seat="8" class="chair-rect" x="82" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+
+    <rect x="28" y="240" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="54" y="353" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,54,353)">B-3</text>
+    <rect data-zone="B" data-table="B-3" data-seat="1" class="chair-rect" x="12" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="2" class="chair-rect" x="12" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="3" class="chair-rect" x="12" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="4" class="chair-rect" x="12" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="5" class="chair-rect" x="82" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="6" class="chair-rect" x="82" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="7" class="chair-rect" x="82" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-3" data-seat="8" class="chair-rect" x="82" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+
+    <rect x="118" y="12" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="144" y="125" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,144,125)">B-2</text>
+    <rect data-zone="B" data-table="B-2" data-seat="1" class="chair-rect" x="102" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="2" class="chair-rect" x="102" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="3" class="chair-rect" x="102" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="4" class="chair-rect" x="102" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="5" class="chair-rect" x="172" y="12"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="6" class="chair-rect" x="172" y="67"  width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="7" class="chair-rect" x="172" y="122" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-2" data-seat="8" class="chair-rect" x="172" y="177" width="14" height="46" fill="#3a5c4e" rx="2"/>
+
+    <rect x="118" y="240" width="52" height="220" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+    <text x="144" y="353" fill="#3a5848" font-size="7" text-anchor="middle" transform="rotate(-90,144,353)">B-4</text>
+    <rect data-zone="B" data-table="B-4" data-seat="1" class="chair-rect" x="102" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="2" class="chair-rect" x="102" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="3" class="chair-rect" x="102" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="4" class="chair-rect" x="102" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="5" class="chair-rect" x="172" y="240" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="6" class="chair-rect" x="172" y="295" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="7" class="chair-rect" x="172" y="350" width="14" height="46" fill="#3a5c4e" rx="2"/>
+    <rect data-zone="B" data-table="B-4" data-seat="8" class="chair-rect" x="172" y="405" width="14" height="46" fill="#3a5c4e" rx="2"/>
+  </svg>
+</div>
+
+<div class="wall"><div class="wall-line"></div><div class="wall-tag">가벽 오픈</div><div class="wall-line"></div></div>
+
+<!--
+  ══════════════════════════════════════════
+  메인 홀 — 시계방향 90도 회전
+  원래 가로 레이아웃(900×490):
+    Row1: 8인L | 4인C | 8인R  (y=8~100)
+    Row2: 12인L | 비움 | 8인R  (y=110~200)
+    Row3: 12인L | 비움 | 8인R  (y=210~300)
+    Row4: 8인L  | 8인C | 비움R (y=310~400)
+    창가 = 위(y=0)
+  rotate(90) translate(0,-490) 적용하면
+    원래 x→새 y, 원래 y→새 x(반전)
+  viewBox="0 0 490 900" — 세로로 긴 SVG
+  ══════════════════════════════════════════
+-->
+<div class="zone hall">
+  <div class="zone-label">메인 홀</div>
+  <div class="zone-count">의자 <span>76석</span></div>
+  <!--
+    viewBox 0 0 490 900
+    내부 g에 rotate(90) translate(0,-490) 적용
+    → 원래 900×490 좌표계 그대로 사용
+  -->
+  <svg class="room-svg" viewBox="0 0 490 640" id="svg-H">
+<g transform="rotate(90) translate(0,-490)">
+  <rect x="4" y="1" width="880" height="7" fill="#4a7c68" opacity="0.22" rx="1"/>
+  <text x="448" y="7" fill="#4a7c68" font-size="8" text-anchor="middle" opacity="0.6">창가</text>
+  <!-- ROW 1 -->
+  <rect x="8" y="20" width="211" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="113" y="50" fill="#3a5848" font-size="7.5" text-anchor="middle">H-1L</text>
+  <rect data-zone="H" data-table="H-1L" data-seat="1" class="chair-rect" x="8" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="2" class="chair-rect" x="63" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="3" class="chair-rect" x="118" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="4" class="chair-rect" x="173" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="5" class="chair-rect" x="8" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="6" class="chair-rect" x="63" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="7" class="chair-rect" x="118" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1L" data-seat="8" class="chair-rect" x="173" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect x="235" y="20" width="101" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="285" y="50" fill="#3a5848" font-size="7.5" text-anchor="middle">H-1C</text>
+  <rect data-zone="H" data-table="H-1C" data-seat="1" class="chair-rect" x="235" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1C" data-seat="2" class="chair-rect" x="290" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1C" data-seat="3" class="chair-rect" x="235" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1C" data-seat="4" class="chair-rect" x="290" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect x="352" y="20" width="211" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="457" y="50" fill="#3a5848" font-size="7.5" text-anchor="middle">H-1R</text>
+  <rect data-zone="H" data-table="H-1R" data-seat="1" class="chair-rect" x="352" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="2" class="chair-rect" x="407" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="3" class="chair-rect" x="462" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="4" class="chair-rect" x="517" y="4" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="5" class="chair-rect" x="352" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="6" class="chair-rect" x="407" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="7" class="chair-rect" x="462" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-1R" data-seat="8" class="chair-rect" x="517" y="74" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <text x="880" y="50" fill="#3a5848" font-size="8" text-anchor="end">1열</text>
+  <!-- ROW 2 -->
+  <rect x="8" y="124" width="321" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="168" y="154" fill="#3a5848" font-size="7.5" text-anchor="middle">H-2L</text>
+  <rect data-zone="H" data-table="H-2L" data-seat="1" class="chair-rect" x="8" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="2" class="chair-rect" x="63" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="3" class="chair-rect" x="118" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="4" class="chair-rect" x="173" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="5" class="chair-rect" x="228" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="6" class="chair-rect" x="283" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="7" class="chair-rect" x="8" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="8" class="chair-rect" x="63" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="9" class="chair-rect" x="118" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="10" class="chair-rect" x="173" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="11" class="chair-rect" x="228" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2L" data-seat="12" class="chair-rect" x="283" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect x="345" y="124" width="60" height="52" fill="none" stroke="#253028" stroke-width="1" stroke-dasharray="5,4" rx="2"/>
+  <text x="375" y="154" fill="#253028" font-size="7" text-anchor="middle">비움</text>
+  <rect x="421" y="124" width="211" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="526" y="154" fill="#3a5848" font-size="7.5" text-anchor="middle">H-2R</text>
+  <rect data-zone="H" data-table="H-2R" data-seat="1" class="chair-rect" x="421" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="2" class="chair-rect" x="476" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="3" class="chair-rect" x="531" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="4" class="chair-rect" x="586" y="108" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="5" class="chair-rect" x="421" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="6" class="chair-rect" x="476" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="7" class="chair-rect" x="531" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-2R" data-seat="8" class="chair-rect" x="586" y="178" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <text x="880" y="154" fill="#3a5848" font-size="8" text-anchor="end">2열</text>
+  <!-- ROW 3 -->
+  <rect x="8" y="228" width="321" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="168" y="258" fill="#3a5848" font-size="7.5" text-anchor="middle">H-3L</text>
+  <rect data-zone="H" data-table="H-3L" data-seat="1" class="chair-rect" x="8" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="2" class="chair-rect" x="63" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="3" class="chair-rect" x="118" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="4" class="chair-rect" x="173" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="5" class="chair-rect" x="228" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="6" class="chair-rect" x="283" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="7" class="chair-rect" x="8" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="8" class="chair-rect" x="63" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="9" class="chair-rect" x="118" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="10" class="chair-rect" x="173" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="11" class="chair-rect" x="228" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3L" data-seat="12" class="chair-rect" x="283" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect x="345" y="228" width="60" height="52" fill="none" stroke="#253028" stroke-width="1" stroke-dasharray="5,4" rx="2"/>
+  <text x="375" y="258" fill="#253028" font-size="7" text-anchor="middle">비움</text>
+  <rect x="421" y="228" width="211" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="526" y="258" fill="#3a5848" font-size="7.5" text-anchor="middle">H-3R</text>
+  <rect data-zone="H" data-table="H-3R" data-seat="1" class="chair-rect" x="421" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="2" class="chair-rect" x="476" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="3" class="chair-rect" x="531" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="4" class="chair-rect" x="586" y="212" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="5" class="chair-rect" x="421" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="6" class="chair-rect" x="476" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="7" class="chair-rect" x="531" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-3R" data-seat="8" class="chair-rect" x="586" y="282" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <text x="880" y="258" fill="#3a5848" font-size="8" text-anchor="end">3열</text>
+  <!-- ROW 4 -->
+  <rect x="8" y="332" width="211" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="113" y="362" fill="#3a5848" font-size="7.5" text-anchor="middle">H-4L</text>
+  <rect data-zone="H" data-table="H-4L" data-seat="1" class="chair-rect" x="8" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="2" class="chair-rect" x="63" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="3" class="chair-rect" x="118" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="4" class="chair-rect" x="173" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="5" class="chair-rect" x="8" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="6" class="chair-rect" x="63" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="7" class="chair-rect" x="118" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4L" data-seat="8" class="chair-rect" x="173" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect x="235" y="332" width="211" height="52" fill="#1e2a24" stroke="#3a5040" stroke-width="1" rx="2"/>
+  <text x="340" y="362" fill="#3a5848" font-size="7.5" text-anchor="middle">H-4C</text>
+  <rect data-zone="H" data-table="H-4C" data-seat="1" class="chair-rect" x="235" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="2" class="chair-rect" x="290" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="3" class="chair-rect" x="345" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="4" class="chair-rect" x="400" y="316" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="5" class="chair-rect" x="235" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="6" class="chair-rect" x="290" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="7" class="chair-rect" x="345" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect data-zone="H" data-table="H-4C" data-seat="8" class="chair-rect" x="400" y="386" width="46" height="14" fill="#3a5c4e" rx="1"/>
+  <rect x="462" y="332" width="100" height="52" fill="none" stroke="#253028" stroke-width="1" stroke-dasharray="5,4" rx="2"/>
+  <text x="512" y="362" fill="#253028" font-size="7" text-anchor="middle">비움</text>
+  <text x="880" y="362" fill="#3a5848" font-size="8" text-anchor="end">4열</text>
+</g>
+</svg>
+</div>
+
+</div><!-- /layout-row -->
+
+<!-- 이름 입력 모달 -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">좌석 정보</h3>
+    <p id="modal-sub">이름을 입력하면 의자에 표시됩니다</p>
+    <input type="text" id="modal-input" placeholder="이름 입력..." maxlength="6" autocomplete="off"/>
+    <div class="modal-btns">
+      <button class="del"     id="modal-del-btn">삭제</button>
+      <button                 id="modal-cancel-btn">취소</button>
+      <button class="primary" id="modal-save-btn">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="info-panel">
+  <div class="info-text" id="info-text">의자를 클릭해 이름을 기입하세요</div>
+  <button class="info-reset" id="reset-btn">전체 초기화</button>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-box" style="background:#3a5c4e;"></div><span>빈 의자</span></div>
+  <div class="leg"><div class="leg-box" style="background:#5a9e80;"></div><span>이름 기입됨</span></div>
+  <div class="leg"><div class="leg-box" style="background:#1e2a24;border:1px solid #3a5040;"></div><span>테이블</span></div>
+  <div class="leg"><div class="leg-box" style="background:none;border:1px dashed #253028;"></div><span>비움</span></div>
+  <div class="leg" style="margin-left:auto;">
+    <div style="width:0;height:26px;border-left:2px dashed #c4874a;opacity:0.7;"></div>
+    <span style="margin-left:6px;">가벽 (행사 시 오픈)</span>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ─────────────────────────────────────────
+// ⚠️ 아래 URL을 Firebase 콘솔에서 복사한 값으로 교체하세요
+const FIREBASE_URL = 'https://gwp-seat-default-rtdb.asia-southeast1.firebasedatabase.app';
+// ─────────────────────────────────────────
+
+const app = initializeApp({ databaseURL: FIREBASE_URL });
+const db  = getDatabase(app);
+const seatsRef = ref(db, 'seats');
+
+const names = {};
+let currentEl = null;
+
+const overlay    = document.getElementById('modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalSub   = document.getElementById('modal-sub');
+const modalInput = document.getElementById('modal-input');
+const saveBtn    = document.getElementById('modal-save-btn');
+const cancelBtn  = document.getElementById('modal-cancel-btn');
+const delBtn     = document.getElementById('modal-del-btn');
+const tooltip    = document.getElementById('tooltip');
+const infoText   = document.getElementById('info-text');
+const sNamed     = document.getElementById('s-named');
+
+function key(el) { return `${el.dataset.zone}-${el.dataset.table}-${el.dataset.seat}`; }
+function getLabelEl(el) { return document.getElementById('lbl-' + key(el)); }
+
+function drawLabel(el, name) {
+  const old = getLabelEl(el);
+  if (old) old.remove();
+  if (!name) return;
+  const g = el.closest('g') || el.closest('svg');
+  const x = +el.getAttribute('x') + +el.getAttribute('width')  / 2;
+  const y = +el.getAttribute('y') + +el.getAttribute('height') / 2 + 2;
+  const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  txt.setAttribute('id', 'lbl-' + key(el));
+  txt.setAttribute('x', x);
+  txt.setAttribute('y', y);
+  txt.setAttribute('text-anchor', 'middle');
+  txt.setAttribute('dominant-baseline', 'middle');
+  txt.setAttribute('font-size', el.dataset.zone === 'H' ? '5' : '6.5');
+  txt.setAttribute('fill', '#fff');
+  txt.setAttribute('pointer-events', 'none');
+  txt.textContent = name.length > 5 ? name.slice(0,5) : name;
+  g.appendChild(txt);
+}
+
+function applyName(k, name) {
+  names[k] = name;
+  const el = document.querySelector(
+    `[data-zone="${k.split('-')[0]}"][data-table="${k.split('-').slice(0,-1).join('-')}"][data-seat="${k.split('-').pop()}"]`
+  );
+  if (!el) return;
+  if (name) {
+    el.setAttribute('fill', '#5a9e80');
+    el.classList.add('named');
+  } else {
+    el.setAttribute('fill', '#3a5c4e');
+    el.classList.remove('named');
+    delete names[k];
+  }
+  drawLabel(el, name || '');
+}
+
+// ── Firebase 실시간 동기화 ──
+// 다른 사람이 입력해도 즉시 반영
+onValue(seatsRef, (snapshot) => {
+  // 기존 라벨 전부 초기화
+  document.querySelectorAll('.chair-rect').forEach(el => {
+    el.setAttribute('fill', '#3a5c4e');
+    el.classList.remove('named');
+    const old = getLabelEl(el);
+    if (old) old.remove();
+  });
+  Object.keys(names).forEach(k => delete names[k]);
+
+  const data = snapshot.val() || {};
+  Object.entries(data).forEach(([k, name]) => {
+    if (name) applyName(k, name);
+  });
+  updateInfo();
+});
+
+// ── 의자 클릭 ──
+document.querySelectorAll('.chair-rect').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    const z = el.dataset.zone === 'A' ? '룸 A' : el.dataset.zone === 'B' ? '룸 B' : '메인 홀';
+    const nm = names[key(el)] ? ` — ${names[key(el)]}` : '';
+    tooltip.style.display = 'block';
+    tooltip.textContent = `${z} · ${el.dataset.table} · ${el.dataset.seat}번${nm}`;
+  });
+  el.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top  = (e.clientY - 30) + 'px';
+  });
+  el.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  el.addEventListener('click', () => {
+    currentEl = el;
+    const z = el.dataset.zone === 'A' ? '룸 A' : el.dataset.zone === 'B' ? '룸 B' : '메인 홀';
+    modalTitle.textContent = `${z} · ${el.dataset.table} · ${el.dataset.seat}번 좌석`;
+    modalSub.textContent   = names[key(el)] ? `현재: ${names[key(el)]}` : '이름을 입력하세요';
+    modalInput.value       = names[key(el)] || '';
+    overlay.classList.add('open');
+    setTimeout(() => modalInput.focus(), 50);
+  });
+});
+
+// ── 저장 (Firebase에 쓰기) ──
+function saveName() {
+  if (!currentEl) return;
+  const k = key(currentEl);
+  const name = modalInput.value.trim();
+  const seatRef = ref(db, `seats/${k}`);
+  if (name) {
+    set(seatRef, name);          // Firebase에 저장 → onValue가 자동 반영
+  } else {
+    remove(seatRef);             // 빈 이름이면 삭제
+  }
+  closeModal();
+}
+
+// ── 삭제 ──
+function deleteName() {
+  if (!currentEl) return;
+  remove(ref(db, `seats/${key(currentEl)}`));
+  closeModal();
+}
+
+function closeModal() { overlay.classList.remove('open'); currentEl = null; }
+
+saveBtn.addEventListener('click', saveName);
+delBtn.addEventListener('click', deleteName);
+cancelBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+modalInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveName();
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── 전체 초기화 ──
+document.getElementById('reset-btn').addEventListener('click', async () => {
+  if (!confirm('모든 이름을 초기화할까요?')) return;
+  await remove(seatsRef);  // Firebase 전체 삭제 → onValue가 자동 초기화
+});
+
+function updateInfo() {
+  const count = Object.keys(names).length;
+  sNamed.textContent = count;
+  if (!count) { infoText.textContent = '의자를 클릭해 이름을 기입하세요'; return; }
+  const preview = Object.values(names).slice(0, 6).join(', ');
+  infoText.textContent = `기입 완료 ${count}석 — ${preview}${count > 6 ? ' …' : ''}`;
+}
+</script>
+</body>
+</html>
